@@ -26,31 +26,66 @@ class FlatDict(dict):
             for key in value.keys():
                 self.__setitem__(key, value[key])
 
+    def _lookup_key(self, key):
+        ''' @return tuple (parent_dict, child_key). child_key is relative to parent_dict '''
+        if key in self._values:
+            return self._values, None, key
+
+        full_parent_key = ''
+        i = -1
+        parent_parent = self
+        # Avoid some recursion by doing .keys() (__getitem__ calls _lookup_key)
+        parent_parent_keys = parent_parent._values.keys()
+        while True:
+            new_i = key.find(self._delimiter, i + 1)
+            if new_i < 0:
+                break
+            parent_key = key[:new_i]
+            child_key = key[new_i + 1:]
+            if parent_key in parent_parent_keys:
+                # Again avoid recursion by grabbing _values directly
+                parent = parent_parent._values[parent_key]
+                if not isinstance(parent, FlatDict):
+                    i = new_i
+                    continue
+                parent_keys = parent._values.keys()
+                if child_key in parent_keys:
+                    return parent, full_parent_key + parent_key, child_key
+                # loop recursion
+                full_parent_key += parent_key + self._delimiter
+                parent_parent = parent
+                parent_parent_keys = parent_keys
+                key = child_key
+                i = -1
+            else:
+                i = new_i
+        # Couldnt infer
+        return None, None, None
+
     def __contains__(self, key):
         if self._delimiter not in key:
             return key in self._values
-        parent, child = key.split(self._delimiter, 1)
-        return parent in self._values and child in self._values[parent]
+        parent, parent_key, child_key = self._lookup_key(key)
+        return parent is not None
 
     def __delitem__(self, key):
         if self._delimiter not in key:
             del self._values[key]
         else:
-            parent, child = key.split(self._delimiter, 1)
-            if (parent in self._values and
-                child in self._values[parent]):
-                del self._values[parent][child]
-                if not self._values[parent]:
-                    del self._values[parent]
+            parent, parent_key, child_key = self._lookup_key(key)
+            if parent is not None:
+                del parent._values[child_key]
+                if not parent:
+                    del self[parent_key]
 
     def __getitem__(self, key):
+        # Easy if the delimiter is not in key
         if self._delimiter not in key:
             return self._values[key]
-        parent, child = key.split(self._delimiter, 1)
-        if parent in self._values and child in self._values[parent]:
-            return self._values[parent][child]
-        else:
+        parent, parent_key, child_key = self._lookup_key(key)
+        if parent is None:
             raise KeyError(key)
+        return parent[child_key]
 
     def __iter__(self):
         for key in self.keys():
@@ -72,7 +107,19 @@ class FlatDict(dict):
         if isinstance(value, dict) and not isinstance(value, FlatDict):
             value = FlatDict(value, self._delimiter, former_type=former_type)
         if self._delimiter in key:
-            parent_key, child_key = key.split(self._delimiter, 1)
+            parent, parent_key, child_key = self._lookup_key(key)
+            if parent is None:
+                # Match as best as possible
+                i = -1
+                while True:
+                    i = key.find(self._delimiter, i)
+                    if i < 0:
+                        self._values[key] = value
+                        return
+                    if key[:i] not in self:
+                        break
+                parent_key = key[:i]
+                child_key = key[i + 1:]
             if parent_key not in self._values:
                 self._values[parent_key] = FlatDict(delimiter=self._delimiter)
             parent = self._values.get(parent_key)

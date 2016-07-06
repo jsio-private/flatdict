@@ -12,32 +12,57 @@ import flatdict
 
 class FlatDictTests(unittest.TestCase):
 
-    KEYS = ['foo:bar:baz',
-            'foo:bar:qux',
-            'foo:bar:corge',
-            'foo:grault:baz',
-            'foo:grault:qux',
-            'foo:grault:corge',
-            'foo:list:0',
-            'foo:list:1',
-            'foo:list:2',
-            'foo:tuple:0',
-            'foo:tuple:1',
-            'foo:tuple:2',
-            'garply:foo',
-            'garply:bar',
-            'garply:baz',
-            'garply:qux:corge']
+    KEYS = [
+        'foo:bar:baz',
+        'foo:bar:qux',
+        'foo:bar:corge',
+        'foo:grault:baz',
+        'foo:grault:qux',
+        'foo:grault:corge',
+        'foo:list:0',
+        'foo:list:1',
+        'foo:list:2',
+        'foo:tuple:0',
+        'foo:tuple:1',
+        'foo:tuple:2',
+        'garply:foo',
+        'garply:bar',
+        'garply:baz',
+        'garply:qux:corge',
+        'nested:delim:a',
+        'nested:delim:a:b',
+        'nested:delim:c:d'
+    ]
 
-    VALUES = {'foo': {'bar': {'baz': 0,
-                              'qux': 1,
-                              'corge': 2},
-                      'grault': {'baz': 3,
-                                 'qux': 4,
-                                 'corge': 5},
-                      'list': ['F', 'O', 'O',],
-                      'tuple': ('F', 0, 0,)},
-              'garply': {'foo': 0, 'bar': 1, 'baz': 2, 'qux': {'corge': 3}}}
+    VALUES = {
+        'foo': {
+            'bar': {
+              'baz': 0,
+              'qux': 1,
+              'corge': 2
+            },
+            'grault': {
+                'baz': 3,
+                'qux': 4,
+                'corge': 5
+            },
+            'list': ['F', 'O', 'O'],
+            'tuple': ('F', 0, 0,)
+        },
+        'garply': {
+            'foo': 0,
+            'bar': 1,
+            'baz': 2,
+            'qux': {
+                'corge': 3
+            }
+        },
+        'nested:delim': {
+            'a': 1,
+            'a:b': 2,
+            'c:d': 3
+        }
+    }
 
     def setUp(self):
         self.object = flatdict.FlatDict(self.VALUES)
@@ -66,7 +91,7 @@ class FlatDictTests(unittest.TestCase):
         if key not in self.object:
             assert False, 'Missing key in test object'
         del self.object[key]
-        self.assertTrue(key not in self.object)
+        self.assertTrue(key not in self.object, 'expect: {} not in {}'.format(key, self.object.keys()))
 
     def test_as_dict(self):
         flat_dict_value = flatdict.FlatDict(self.VALUES)
@@ -92,7 +117,10 @@ class FlatDictTests(unittest.TestCase):
                        'garply:foo': 0,
                        'garply:bar': 1,
                        'garply:baz': 2,
-                       'garply:qux:corge': 3}
+                       'garply:qux:corge': 3,
+                       'nested:delim:a': 1,
+                       'nested:delim:a:b': 2,
+                       'nested:delim:c:d': 3}
         self.assertDictEqual(self.object.copy(), expectation)
 
     def test_getitem_flat(self):
@@ -148,7 +176,10 @@ class FlatDictTests(unittest.TestCase):
                        ('garply:foo', 0),
                        ('garply:bar', 1),
                        ('garply:baz', 2),
-                       ('garply:qux:corge', 3)]
+                       ('garply:qux:corge', 3),
+                       ('nested:delim:a', 1),
+                       ('nested:delim:a:b', 2),
+                       ('nested:delim:c:d', 3)]
         self.assertEqual(sorted(self.object.items()), sorted(expectation))
 
     def test_iteritems(self):
@@ -167,7 +198,10 @@ class FlatDictTests(unittest.TestCase):
                        ('garply:foo', 0),
                        ('garply:bar', 1),
                        ('garply:baz', 2),
-                       ('garply:qux:corge', 3)]
+                       ('garply:qux:corge', 3),
+                       ('nested:delim:a', 1),
+                       ('nested:delim:a:b', 2),
+                       ('nested:delim:c:d', 3)]
         for value in self.object.iteritems():
             self.assertTrue(value in expectation)
 
@@ -196,7 +230,7 @@ class FlatDictTests(unittest.TestCase):
     def test_str(self):
         result = str(self.object)
         for key in self.keys:
-            self.assertTrue(key in result)
+            self.assertTrue(key in result, 'expect: {} in {}'.format(key, result))
 
     def test_setdefault_flat_missing(self):
         key = 'abc:def:ghi'
@@ -252,7 +286,10 @@ class FlatDictTests(unittest.TestCase):
                                          'foo:list:2': 'O',
                                          'foo:tuple:0': 'F',
                                          'foo:tuple:1': 0,
-                                         'foo:tuple:2': 0})
+                                         'foo:tuple:2': 0,
+                                         'nested:delim:a': 1,
+                                         'nested:delim:a:b': 2,
+                                         'nested:delim:c:d': 3})
         self.object.update({'foo:bar:baz': 4,
                             'foo:bar:qux': 5,
                             'foo:bar:corge': 6})
@@ -307,7 +344,10 @@ class FlatDictDelimiterTests(FlatDictTests):
                        'foo-list-2': 'O',
                        'foo-tuple-0': 'F',
                        'foo-tuple-1': 0,
-                       'foo-tuple-2': 0}
+                       'foo-tuple-2': 0,
+                       'nested:delim:a': 1,
+                       'nested:delim:a:b': 2,
+                       'nested:delim:c:d': 3}
         self.assertDictEqual(self.object.copy(), expectation)
 
     def test_getitem_flat(self):
