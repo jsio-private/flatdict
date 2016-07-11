@@ -110,7 +110,8 @@ class FlatDict(dict):
             parent, parent_key, child_key = self._lookup_key(key)
             if parent is None:
                 # Match as best as possible
-                i = -1
+                i = 0
+                # FIXME: FlatDictTests.test_setitem_raises_type_error fails
                 while True:
                     i = key.find(self._delimiter, i)
                     if i < 0:
@@ -118,6 +119,9 @@ class FlatDict(dict):
                         return
                     if key[:i] not in self:
                         break
+                    else:
+                        self._values[key] = value
+                        return
                 parent_key = key[:i]
                 child_key = key[i + 1:]
             if parent_key not in self._values:

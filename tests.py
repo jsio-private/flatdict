@@ -345,9 +345,9 @@ class FlatDictDelimiterTests(FlatDictTests):
                        'foo-tuple-0': 'F',
                        'foo-tuple-1': 0,
                        'foo-tuple-2': 0,
-                       'nested:delim:a': 1,
-                       'nested:delim:a:b': 2,
-                       'nested:delim:c:d': 3}
+                       'nested:delim-a': 1,
+                       'nested:delim-a:b': 2,
+                       'nested:delim-c:d': 3}
         self.assertDictEqual(self.object.copy(), expectation)
 
     def test_getitem_flat(self):
@@ -400,7 +400,10 @@ class FlatDictDelimiterTests(FlatDictTests):
                        ('foo-list-2', 'O'),
                        ('foo-tuple-0', 'F'),
                        ('foo-tuple-1', 0),
-                       ('foo-tuple-2', 0)]
+                       ('foo-tuple-2', 0),
+                       ('nested:delim-a', 1),
+                       ('nested:delim-a:b', 2),
+                       ('nested:delim-c:d', 3)]
         self.assertEqual(sorted(self.object.items()), sorted(expectation))
 
     def test_iteritems(self):
